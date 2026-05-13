@@ -1,7 +1,13 @@
 .profile-container {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 40px 20px;
+}
+
+.profile-container > h3 {
+    margin: 0 0 20px 0;
+    font-size: 20px;
+    font-weight: 600;
 }
 
 .profile-header {
@@ -57,12 +63,95 @@
 }
 
 .profile-actions {
-    min-width: 415px;
     display: flex;
     gap: 10px;
     justify-content: flex-end;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.profile-actions .share-button {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-actions .black-button:not(.share-button) {
+    height: 48px;
+    padding: 0 20px;
+    white-space: nowrap;
+}
+
+.profile-skills {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.profile-skills p {
+    margin: 4px 0 0 0;
+    color: #555;
+    font-size: 14px;
 }
 
 .projects-grid-single {
     grid-template-columns: 1fr;
 }
+
+.profile-projects {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.profile-projects h3 {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.profile-project-item {
+    padding: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+.profile-project-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+}
+
+.profile-project-item:last-child {
+    margin-bottom: 0;
+}
+
+.profile-project-item a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.profile-project-item h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #007bff;
+}
+
+.profile-project-item p {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+    line-height: 1.5;
+}
+
