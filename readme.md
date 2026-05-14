@@ -45,4 +45,4 @@ POSTGRES_HOST=localhost
 POSTGRES_PORT=5436
 TASK_VERSION=3
 
-## Был выполнен 3 вариант задания
+## - Был выполнен 3 вариант задания
