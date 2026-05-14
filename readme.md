@@ -34,7 +34,7 @@ python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
 
-**## .env**
+## .env
 DJANGO_SECRET_KEY=change_for_safety
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
