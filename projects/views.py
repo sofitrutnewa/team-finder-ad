@@ -1,14 +1,18 @@
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST, require_GET
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Project
-from skills.models import Skill
-from .forms import ProjectForm
 import json
+from http import HTTPStatus
+
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET, require_POST
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
+
+from projects.constants import PAGINATE_BY, SKILL_AUTOCOMPLETE_LIMIT
+from projects.forms import ProjectForm
+from projects.models import Project
+from skills.models import Skill
 
 
 @require_POST
@@ -17,10 +21,16 @@ def toggle_participate(request, pk):
     project = get_object_or_404(Project, pk=pk)
 
     if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Требуется авторизация'}, status=401)
+        return JsonResponse(
+            {'error': 'Требуется авторизация'},
+            status=HTTPStatus.UNAUTHORIZED
+        )
 
     if request.user == project.owner:
-        return JsonResponse({'error': 'Владелец не может откликнуться'}, status=400)
+        return JsonResponse(
+            {'error': 'Владелец не может откликнуться'},
+            status=HTTPStatus.BAD_REQUEST
+        )
 
     if request.user in project.participants.all():
         project.participants.remove(request.user)
@@ -29,10 +39,9 @@ def toggle_participate(request, pk):
         project.participants.add(request.user)
         is_participating = True
 
-    # Возвращаем обновлённые данные
     return JsonResponse({
         'status': 'ok',
-        'is_participating': is_participating,
+        'participant': is_participating,
         'participants_count': project.participants.count()
     })
 
@@ -40,18 +49,26 @@ def toggle_participate(request, pk):
 @require_POST
 @csrf_exempt
 def complete_project(request, pk):
+    from config.constants import STATUS_CLOSED, STATUS_OPEN
+
     project = get_object_or_404(Project, pk=pk)
 
     if request.user != project.owner:
-        return JsonResponse({'error': 'Нет прав'}, status=403)
+        return JsonResponse(
+            {'error': 'Нет прав'},
+            status=HTTPStatus.FORBIDDEN
+        )
 
-    if project.status != 'open':
-        return JsonResponse({'error': 'Проект уже завершён'}, status=400)
+    if project.status != STATUS_OPEN:
+        return JsonResponse(
+            {'error': 'Проект уже завершён'},
+            status=HTTPStatus.BAD_REQUEST
+        )
 
-    project.status = 'closed'
+    project.status = STATUS_CLOSED
     project.save()
 
-    return JsonResponse({'status': 'ok', 'project_status': 'closed'})
+    return JsonResponse({'status': 'ok', 'project_status': STATUS_CLOSED})
 
 
 class ProjectCreateView(LoginRequiredMixin, CreateView):
@@ -66,7 +83,7 @@ class ProjectCreateView(LoginRequiredMixin, CreateView):
         return response
 
     def get_success_url(self):
-        return reverse_lazy('project-detail', kwargs={'pk': self.object.pk})
+        return reverse('projects:project_detail', kwargs={'pk': self.object.pk})
 
 
 class ProjectUpdateView(LoginRequiredMixin, UpdateView):
@@ -78,14 +95,14 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
         return super().get_queryset().filter(owner=self.request.user)
 
     def get_success_url(self):
-        return reverse_lazy('project-detail', kwargs={'pk': self.object.pk})
+        return reverse('projects:project_detail', kwargs={'pk': self.object.pk})
 
 
 class ProjectListView(ListView):
     model = Project
     template_name = 'projects/project_list.html'
     context_object_name = 'projects'
-    paginate_by = 12
+    paginate_by = PAGINATE_BY
     ordering = ['-created_at']
 
     def get_queryset(self):
@@ -99,6 +116,8 @@ class ProjectListView(ListView):
         context = super().get_context_data(**kwargs)
         context['all_skills'] = Skill.objects.all().order_by('name')
         context['active_skill'] = self.request.GET.get('skill')
+        if self.request.user.is_authenticated:
+            context['user_id'] = self.request.user.id
         return context
 
 
@@ -110,14 +129,18 @@ class ProjectDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['is_participant'] = self.request.user in self.object.participants.all()
+        if self.request.user.is_authenticated:
+            context['user_id'] = self.request.user.id
         return context
 
 
 @require_GET
 def skill_autocomplete(request):
-    q = request.GET.get('q', '')
-    skills = Skill.objects.filter(name__icontains=q).order_by('name')[:10]
-    data = [{'id': s.id, 'name': s.name} for s in skills]
+    query = request.GET.get('q', '')
+    skills = Skill.objects.filter(
+        name__icontains=query
+    ).order_by('name')[:SKILL_AUTOCOMPLETE_LIMIT]
+    data = [{'id': skill.id, 'name': skill.name} for skill in skills]
     return JsonResponse(data, safe=False)
 
 
@@ -127,29 +150,31 @@ def add_skill_to_project(request, pk):
     project = get_object_or_404(Project, pk=pk)
 
     if request.user != project.owner:
-        return JsonResponse({'error': 'Нет прав'}, status=403)
+        return JsonResponse(
+            {'error': 'Нет прав'},
+            status=HTTPStatus.FORBIDDEN
+        )
 
-    data = json.loads(request.body)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        data = {}
+
     skill_id = data.get('skill_id')
     skill_name = data.get('name')
 
     created = False
     if skill_name and not skill_id:
         skill, created = Skill.objects.get_or_create(name=skill_name)
-        skill_id = skill.id
     else:
         skill = get_object_or_404(Skill, pk=skill_id)
 
-    if project.skills.filter(id=skill.id).exists():
-        return JsonResponse({
-            'skill_id': skill.id,
-            'created': created,
-            'added': False
-        })
+    if not project.skills.filter(id=skill.id).exists():
+        project.skills.add(skill)
 
-    project.skills.add(skill)
     return JsonResponse({
-        'skill_id': skill.id,
+        'id': skill.id,
+        'name': skill.name,
         'created': created,
         'added': True
     })
@@ -161,9 +186,12 @@ def remove_skill_from_project(request, pk, skill_id):
     project = get_object_or_404(Project, pk=pk)
 
     if request.user != project.owner:
-        return JsonResponse({'error': 'Нет прав'}, status=403)
+        return JsonResponse(
+            {'error': 'Нет прав'},
+            status=HTTPStatus.FORBIDDEN
+        )
 
     skill = get_object_or_404(Skill, pk=skill_id)
     project.skills.remove(skill)
 
-    return JsonResponse({'status': 'ok'})
+    return JsonResponse({'status': 'ok', 'id': skill_id})

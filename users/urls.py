@@ -1,15 +1,32 @@
+from django.contrib.auth.views import LogoutView
+from django.shortcuts import redirect
 from django.urls import path
-from . import views
+
+from users.views import (
+    ChangePasswordView,
+    LoginView,
+    ProfileEditView,
+    RegisterView,
+    UserDetailView,
+    UserListView,
+)
+
+
+def redirect_to_profile_edit(request):
+    if request.user.is_authenticated:
+        return redirect('users:profile_edit', pk=request.user.id)
+    return redirect('users:login')
+
 
 app_name = 'users'
 
 urlpatterns = [
-    path('login/', views.LoginView.as_view(), name='login'),
-    path('logout/', views.logout_view, name='logout'),
-    path('register/', views.RegisterView.as_view(), name='register'),
-    path('list/', views.UserListView.as_view(), name='user-list'),
-    path('edit-profile/', views.ProfileEditView.as_view(), name='profile-edit'),
-    path('<int:pk>/', views.UserDetailView.as_view(), name='user-detail'),
-    path('change-password/', views.ChangePasswordView.as_view(),
-         name='change-password'),
+    path('register/', RegisterView.as_view(), name='register'),
+    path('login/', LoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(next_page='/projects/list/'), name='logout'),
+    path('edit-profile/', redirect_to_profile_edit, name='profile_edit_redirect'),
+    path('<int:pk>/', UserDetailView.as_view(), name='user_detail'),
+    path('<int:pk>/edit/', ProfileEditView.as_view(), name='profile_edit'),
+    path('list/', UserListView.as_view(), name='user_list'),
+    path('change-password/', ChangePasswordView.as_view(), name='change_password'),
 ]

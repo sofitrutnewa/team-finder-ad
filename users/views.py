@@ -1,37 +1,32 @@
-from django.contrib.auth.views import PasswordChangeView
-from django.shortcuts import render, redirect
-from django.views.generic import DetailView, CreateView
-from django.contrib.auth.views import LoginView as BaseLoginView
 from django.contrib.auth import logout
-from django.urls import reverse_lazy
-from .models import User
-from .forms import LoginForm, RegisterForm
-from django.views.generic import ListView
-from django.shortcuts import get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import UpdateView
-from .forms import ProfileEditForm
+from django.contrib.auth.views import LoginView as BaseLoginView
+from django.contrib.auth.views import PasswordChangeView
+from django.shortcuts import redirect
+from django.urls import reverse, reverse_lazy
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
+
+from users.constants import USERS_PAGINATE_BY
+from users.forms import LoginForm, ProfileEditForm, RegisterForm
+from users.models import User
 
 
-class ProfileEditView(LoginRequiredMixin, UpdateView):
-    model = User
-    form_class = ProfileEditForm
-    template_name = 'users/edit_profile.html'
-    success_url = None  # будет переопределено
-
-    def get_object(self):
-        return self.request.user
+class LoginView(BaseLoginView):
+    form_class = LoginForm
+    template_name = 'users/login.html'
 
     def get_success_url(self):
-        return f'/users/{self.request.user.pk}/'
+        return reverse('projects:project_list')
 
 
-class UserListView(ListView):
-    model = User
-    template_name = 'users/participants.html'
-    context_object_name = 'participants'
-    paginate_by = 12
-    ordering = ['id']
+class RegisterView(CreateView):
+    form_class = RegisterForm
+    template_name = 'users/register.html'
+    success_url = reverse_lazy('users:login')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        return response
 
 
 class UserDetailView(DetailView):
@@ -45,31 +40,33 @@ class UserDetailView(DetailView):
         return context
 
 
-class LoginView(BaseLoginView):
-    form_class = LoginForm
-    template_name = 'users/login.html'
-    next_page = reverse_lazy('project-list')
-
-
-class RegisterView(CreateView):
+class UserListView(ListView):
     model = User
-    form_class = RegisterForm
-    template_name = 'users/register.html'
-    success_url = reverse_lazy('login')
-
-    def form_valid(self, form):
-        user = form.save(commit=False)
-        user.name = form.cleaned_data['name']
-        user.surname = form.cleaned_data['surname']
-        user.save()
-        return redirect(self.success_url)
+    template_name = 'users/participants.html'
+    context_object_name = 'participants'
+    paginate_by = USERS_PAGINATE_BY
+    ordering = ['id']
 
 
-def logout_view(request):
-    logout(request)
-    return redirect('project-list')
+class ProfileEditView(LoginRequiredMixin, UpdateView):
+    model = User
+    form_class = ProfileEditForm
+    template_name = 'users/edit_profile.html'
+
+    def get_object(self):
+        return self.request.user
+
+    def get_success_url(self):
+        return reverse('users:user_detail', kwargs={'pk': self.request.user.pk})
 
 
 class ChangePasswordView(PasswordChangeView):
     template_name = 'users/change_password.html'
-    success_url = reverse_lazy('project-list')
+
+    def get_success_url(self):
+        return reverse('projects:project_list')
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('projects:project_list')

@@ -1,5 +1,6 @@
-from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.test import TestCase
+
 from projects.models import Project
 from skills.models import Skill
 
@@ -7,14 +8,15 @@ User = get_user_model()
 
 
 class ProjectModelTest(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
             email='test@example.com',
             name='Test',
             surname='User',
             password='pass'
         )
-        self.skill = Skill.objects.create(name='Python')
+        cls.skill = Skill.objects.create(name='Python')
 
     def test_create_project(self):
         project = Project.objects.create(

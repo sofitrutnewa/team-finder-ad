@@ -1,48 +1,33 @@
 from django import forms
-from .models import Project
+
+from projects.models import Project
+
+from config.constants import STATUS_CHOICES
 
 
 class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
-        fields = ('name', 'description', 'github_url', 'status')
+        fields = ['name', 'description', 'github_url', 'status']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4}),
-            'status': forms.Select(choices=Project.STATUS_CHOICES),
+            'status': forms.Select(choices=STATUS_CHOICES),
+            'name': forms.TextInput(attrs={
+                'placeholder': 'Название проекта',
+                'class': 'form-control'
+            }),
+            'description': forms.Textarea(attrs={
+                'placeholder': 'Описание проекта',
+                'rows': 4,
+                'class': 'form-control'
+            }),
+            'github_url': forms.URLInput(attrs={
+                'placeholder': 'https://github.com/username/repo',
+                'class': 'form-control'
+            }),
         }
-
-    def clean_github_url(self):
-        url = self.cleaned_data.get('github_url')
-        if url and 'github.com' not in url:
-            raise forms.ValidationError('Ссылка должна вести на GitHub')
-        return url
-
-
-class ProjectForm(forms.ModelForm):
-    class Meta:
-        model = Project
-        fields = ('name', 'description', 'github_url', 'status')
-        widgets = {
-            'name': forms.TextInput(attrs={'placeholder': 'Название проекта'}),
-            'description': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Описание проекта'}),
-            'github_url': forms.URLInput(attrs={'placeholder': 'https://github.com/username/repo'}),
-            'status': forms.Select(choices=Project.STATUS_CHOICES),
-        }
-
-
-class ProjectForm(forms.ModelForm):
-    class Meta:
-        model = Project
-        fields = ('name', 'description', 'github_url', 'status')
         labels = {
             'name': 'Название:',
             'description': 'Описание:',
             'github_url': 'Ссылка на GitHub:',
             'status': 'Статус:',
-        }
-        widgets = {
-            'name': forms.TextInput(attrs={'placeholder': 'Название проекта'}),
-            'description': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Описание проекта'}),
-            'github_url': forms.URLInput(attrs={'placeholder': 'https://github.com/username/repo'}),
-            'status': forms.Select(choices=Project.STATUS_CHOICES),
         }
