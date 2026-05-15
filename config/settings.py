@@ -101,7 +101,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
 
-LOGIN_URL = '/users/login/'
+LOGIN_URL = 'users:login'
 
 SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', 0))
 SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'False').lower() == 'true'

@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.db.models import Count
+from django.utils.translation import gettext_lazy as _
 
 from users.models import User
 
@@ -15,11 +16,11 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         (
-            'Personal info',
+            _('Personal info'),
             {'fields': ('name', 'surname', 'phone', 'github_url', 'about', 'avatar')}
         ),
         (
-            'Permissions',
+            _('Permissions'),
             {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}
         ),
     )
@@ -36,7 +37,6 @@ class UserAdmin(BaseUserAdmin):
             projects_count=Count('participated_projects')
         )
 
+    @admin.display(description='Участий в проектах', ordering='projects_count')
     def projects_count(self, obj):
         return obj.projects_count
-    projects_count.short_description = 'Участий в проектах'
-    projects_count.admin_order_field = 'projects_count'

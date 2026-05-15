@@ -11,6 +11,12 @@ from users.forms import LoginForm, ProfileEditForm, RegisterForm
 from users.models import User
 
 
+def redirect_to_profile_edit(request):
+    if request.user.is_authenticated:
+        return redirect('users:profile_edit', pk=request.user.id)
+    return redirect('users:login')
+
+
 class LoginView(BaseLoginView):
     form_class = LoginForm
     template_name = 'users/login.html'

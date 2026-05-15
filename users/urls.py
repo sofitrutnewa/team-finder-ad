@@ -1,5 +1,4 @@
 from django.contrib.auth.views import LogoutView
-from django.shortcuts import redirect
 from django.urls import path
 
 from users.views import (
@@ -9,14 +8,8 @@ from users.views import (
     RegisterView,
     UserDetailView,
     UserListView,
+    redirect_to_profile_edit,
 )
-
-
-def redirect_to_profile_edit(request):
-    if request.user.is_authenticated:
-        return redirect('users:profile_edit', pk=request.user.id)
-    return redirect('users:login')
-
 
 app_name = 'users'
 

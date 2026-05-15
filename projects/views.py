@@ -9,10 +9,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
-from projects.constants import PAGINATE_BY, SKILL_AUTOCOMPLETE_LIMIT
+from projects.constants import PAGINATE_BY
 from projects.forms import ProjectForm
 from projects.models import Project
 from skills.models import Skill
+
+from config.constants import STATUS_CLOSED, STATUS_OPEN
 
 
 @require_POST
@@ -32,7 +34,7 @@ def toggle_participate(request, pk):
             status=HTTPStatus.BAD_REQUEST
         )
 
-    if request.user in project.participants.all():
+    if (is_participating := project.participants.filter(id=request.user.id).exists()):
         project.participants.remove(request.user)
         is_participating = False
     else:
@@ -49,8 +51,6 @@ def toggle_participate(request, pk):
 @require_POST
 @csrf_exempt
 def complete_project(request, pk):
-    from config.constants import STATUS_CLOSED, STATUS_OPEN
-
     project = get_object_or_404(Project, pk=pk)
 
     if request.user != project.owner:
@@ -128,7 +128,9 @@ class ProjectDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['is_participant'] = self.request.user in self.object.participants.all()
+        context['is_participant'] = self.object.participants.filter(
+            id=self.request.user.id
+        ).exists()
         if self.request.user.is_authenticated:
             context['user_id'] = self.request.user.id
         return context
@@ -136,12 +138,8 @@ class ProjectDetailView(DetailView):
 
 @require_GET
 def skill_autocomplete(request):
-    query = request.GET.get('q', '')
-    skills = Skill.objects.filter(
-        name__icontains=query
-    ).order_by('name')[:SKILL_AUTOCOMPLETE_LIMIT]
-    data = [{'id': skill.id, 'name': skill.name} for skill in skills]
-    return JsonResponse(data, safe=False)
+    from skills.views import skill_autocomplete as skills_autocomplete
+    return skills_autocomplete(request)
 
 
 @require_POST

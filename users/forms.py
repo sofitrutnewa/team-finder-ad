@@ -14,6 +14,7 @@ from config.constants import (
     MAX_LENGTH_USER_NAME,
     MAX_LENGTH_USER_SURNAME,
 )
+from config.mixins import GitHubURLMixin
 
 
 class LoginForm(AuthenticationForm):
@@ -78,7 +79,7 @@ class RegisterForm(forms.ModelForm):
         return user
 
 
-class ProfileEditForm(forms.ModelForm):
+class ProfileEditForm(GitHubURLMixin, forms.ModelForm):
     name = forms.CharField(
         max_length=MAX_LENGTH_USER_NAME,
         label='Имя'
@@ -122,12 +123,6 @@ class ProfileEditForm(forms.ModelForm):
                 f'<div><img src="{self.instance.avatar.url}" '
                 f'width="100" style="border-radius: 10px;"></div>'
             )
-
-    def clean_github_url(self):
-        github_url = self.cleaned_data.get('github_url')
-        if github_url and 'github.com' not in github_url:
-            raise ValidationError('Ссылка должна вести на GitHub')
-        return github_url
 
     def clean_phone(self):
         phone = self.cleaned_data.get('phone')

@@ -3,9 +3,10 @@ from django import forms
 from projects.models import Project
 
 from config.constants import STATUS_CHOICES
+from config.mixins import GitHubURLMixin
 
 
-class ProjectForm(forms.ModelForm):
+class ProjectForm(GitHubURLMixin, forms.ModelForm):
     class Meta:
         model = Project
         fields = ['name', 'description', 'github_url', 'status']

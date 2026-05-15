@@ -1,3 +1,5 @@
+from enum import Enum
+
 MAX_LENGTH_NAME = 200
 MAX_LENGTH_SKILL_NAME = 124
 MAX_LENGTH_USER_NAME = 124
@@ -16,3 +18,27 @@ STATUS_CHOICES = [
 
 PAGINATE_BY = 12
 SKILL_AUTOCOMPLETE_LIMIT = 10
+
+GITHUB_DOMAINS = ['github.com', 'www.github.com']
+
+AVATAR_SIZE = 200
+AVATAR_FONT_SIZE = 100
+AVATAR_TEXT_COLOR = 'white'
+
+
+class AvatarColor(str, Enum):
+    BLUE = '#4A90E2'
+    GREEN = '#50E3C2'
+    ORANGE = '#F5A623'
+    RED = '#D0021B'
+    BROWN = '#8B572A'
+    DARK_GREEN = '#417505'
+    YELLOW = '#F8E71C'
+    PURPLE = '#BD10E0'
+    LIGHT_GREEN = '#7ED321'
+    PINK = '#FF6B6B'
+    TURQUOISE = '#4ECDC4'
+    LIGHT_BLUE = '#45B7D1'
+
+
+AVATAR_COLORS = [color.value for color in AvatarColor]

@@ -10,6 +10,10 @@ from PIL import Image, ImageDraw, ImageFont
 from users.managers import UserManager
 
 from config.constants import (
+    AVATAR_COLORS,
+    AVATAR_FONT_SIZE,
+    AVATAR_SIZE,
+    AVATAR_TEXT_COLOR,
     MAX_LENGTH_ABOUT,
     MAX_LENGTH_PHONE,
     MAX_LENGTH_USER_NAME,
@@ -59,25 +63,19 @@ class User(AbstractBaseUser, PermissionsMixin):
         super().save(*args, **kwargs)
 
     def generate_avatar(self):
-        colors = [
-            '#4A90E2', '#50E3C2', '#F5A623', '#D0021B',
-            '#8B572A', '#417505', '#F8E71C', '#BD10E0',
-            '#7ED321', '#FF6B6B', '#4ECDC4', '#45B7D1'
-        ]
-        color = random.choice(colors)
-        size = 200
-        image = Image.new('RGB', (size, size), color)
+        color = random.choice(AVATAR_COLORS)
+        image = Image.new('RGB', (AVATAR_SIZE, AVATAR_SIZE), color)
         draw = ImageDraw.Draw(image)
         letter = self.name[0].upper()
         try:
-            font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', 100)
+            font = ImageFont.truetype('/System/Library/Fonts/Helvetica.ttc', AVATAR_FONT_SIZE)
         except (OSError, IOError):
             font = ImageFont.load_default()
         bbox = draw.textbbox((0, 0), letter, font=font)
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
-        position = ((size - text_width) / 2, (size - text_height) / 2)
-        draw.text(position, letter, fill='white', font=font)
+        position = ((AVATAR_SIZE - text_width) / 2, (AVATAR_SIZE - text_height) / 2)
+        draw.text(position, letter, fill=AVATAR_TEXT_COLOR, font=font)
         buffer = BytesIO()
         image.save(buffer, format='PNG')
         return ContentFile(buffer.getvalue(), f'avatar_{self.email}.png')
